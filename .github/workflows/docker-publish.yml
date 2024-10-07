@@ -106,7 +106,7 @@ jobs:
       - name: Create SBOM with Trivy
         if: github.event_name != 'pull_request'
         run: |
-          trivy image --skip-db-update --offline-scan --format cyclonedx  ${{ steps.build_push.outputs.digest }} --output sbom.json
+          trivy image --skip-db-update --offline-scan --format cyclonedx  ${{ steps.set-outputs.outputs.image }} --output sbom.json
           cat sbom.json
 
       # Sign the resulting Docker image digest except on PRs.
