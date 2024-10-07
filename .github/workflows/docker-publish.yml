@@ -50,6 +50,12 @@ jobs:
         with:
           cosign-release: 'v2.2.4'
 
+      - name: Install Trivy
+        if: github.event_name != 'pull_request'
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.56.1
+          trivy --version
+
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
       # https://github.com/docker/setup-buildx-action
