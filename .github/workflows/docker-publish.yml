@@ -55,6 +55,9 @@ jobs:
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.56.1
           trivy --version
+          trivy -h | grep cache
+          trivy image --java-db-repository europe-north1-docker.pkg.dev/nais-io/remote-ghcr/aquasecurity/trivy-java-db --download-java-db-only
+
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
