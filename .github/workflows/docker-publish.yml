@@ -79,6 +79,8 @@ jobs:
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix={{date 'YYYY.MM.DD-HH.mm'}}-,priority=9002
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
@@ -104,7 +106,8 @@ jobs:
       - name: Create SBOM with Trivy
         if: github.event_name != 'pull_request'
         run: |
-          trivy --version
+          trivy image --skip-db-update --offline-scan --format cyclonedx  ${{ steps.build_push.outputs.digest }} --output sbom.json
+          cat sbom.json
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
