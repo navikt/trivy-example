@@ -55,7 +55,8 @@ jobs:
       - name: Fetch Trivy Java DB digest
         id: fetch-trivy-java-db-digest
         run: |
-          TRIVY_JAVA_DB_DIGEST=$(oras manifest fetch ghcr.io/aquasecurity/trivy-java-db:1 | jq -r '.layers[0].digest')
+          TRIVY_JAVA_DB_DIGEST=$(oras manifest fetch europe-north1-docker.pkg.dev/nais-io/remote-ghcr/aquasecurity/trivy-java-db:1 | jq -r '.layers[0].digest')
+          echo "Trivy java db digest: $TRIVY_JAVA_DB_DIGEST"
           echo "TRIVY_JAVA_DB_DIGEST=$TRIVY_JAVA_DB_DIGEST" >> $GITHUB_ENV
 
       - uses: actions/cache@v4
@@ -66,9 +67,13 @@ jobs:
 
       - name: Install Trivy
         id: install-trivy
-        if: github.event_name != 'pull_request' && steps.cache-trivy-java-db.outputs.cache-hit != 'true'
+        if: github.event_name != 'pull_request'
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.56.1 
+
+      - name: Download Trivy Java DB
+        if: github.event_name != 'pull_request' && steps.cache-trivy-java-db.outputs.cache-hit != 'true'
+        run: |
           trivy image --cache-dir .trivy --java-db-repository "ghcr.io/aquasecurity/trivy-java-db:1","public.ecr.aws/aquasecurity/trivy-java-db" --download-java-db-only
           NEXT_UPDATE=$(cat .trivy/java-db/metadata.json | jq -r '.NextUpdate')
           echo "$NEXT_UPDATE is the next update"
