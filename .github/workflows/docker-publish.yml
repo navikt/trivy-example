@@ -125,7 +125,7 @@ jobs:
 
 
       - name: 'Generate SBOM'
-        if: inputs.sbom == 'auto-generate-for-me-please.json'
+        #if: inputs.sbom == 'auto-generate-for-me-please.json'
         uses: 'aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8' # ratchet:aquasecurity/trivy-action@0.25.0
         env:
           TRIVY_SKIP_DB_UPDATE: "true"
@@ -134,7 +134,7 @@ jobs:
           scan-type: 'image'
           format: 'cyclonedx'
           output: 'auto-generate-for-me-please.json'
-          image-ref: "${{ inputs.image_ref }}"
+          image-ref: "${{ steps.set-outputs.outputs.image }}"
           cache-dir: ".trivy"
 
 #      - name: Create SBOM with Trivy
