@@ -50,20 +50,29 @@ jobs:
         with:
           cosign-release: 'v2.2.4'
 
+      - uses: oras-project/setup-oras@v1
+
+      - name: Fetch Trivy Java DB digest
+        id: fetch-trivy-java-db-digest
+        run: |
+          TRIVY_JAVA_DB_DIGEST=$(oras manifest fetch ghcr.io/aquasecurity/trivy-java-db:1 | jq -r '.layers[0].digest')
+          echo "TRIVY_JAVA_DB_DIGEST=$TRIVY_JAVA_DB_DIGEST" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        id: cache-trivy-java-db
+        with:
+          path: .trivy
+          key: trivy-db-${{ steps.fetch-trivy-java-db-digest.outputs.TRIVY_JAVA_DB_DIGEST }}
+
       - name: Install Trivy
         id: install-trivy
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && steps.cache-trivy-java-db.outputs.cache-hit != 'true'
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.56.1 
           trivy image --cache-dir .trivy --java-db-repository "ghcr.io/aquasecurity/trivy-java-db:1","public.ecr.aws/aquasecurity/trivy-java-db" --download-java-db-only
           NEXT_UPDATE=$(cat .trivy/java-db/metadata.json | jq -r '.NextUpdate')
           echo "$NEXT_UPDATE is the next update"
           echo "NEXT_UPDATE=$NEXT_UPDATE" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v4
-        with:
-          path: .trivy
-          key: trivy-db-${{ steps.install-trivy.outputs.NEXT_UPDATE }}
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
