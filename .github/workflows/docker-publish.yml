@@ -75,9 +75,6 @@ jobs:
         if: github.event_name != 'pull_request' && steps.cache-trivy-java-db.outputs.cache-hit != 'true'
         run: |
           trivy image --cache-dir .trivy --java-db-repository "ghcr.io/aquasecurity/trivy-java-db:1","public.ecr.aws/aquasecurity/trivy-java-db" --download-java-db-only
-          NEXT_UPDATE=$(cat .trivy/java-db/metadata.json | jq -r '.NextUpdate')
-          echo "$NEXT_UPDATE is the next update"
-          echo "NEXT_UPDATE=$NEXT_UPDATE" >> $GITHUB_OUTPUT
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
