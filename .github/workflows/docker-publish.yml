@@ -63,7 +63,7 @@ jobs:
         id: cache-trivy-java-db
         with:
           path: .trivy
-          key: trivy-db-${{ steps.fetch-trivy-java-db-digest.outputs.TRIVY_JAVA_DB_DIGEST }}
+          key: yolo-trivy-db-${{ steps.fetch-trivy-java-db-digest.outputs.TRIVY_JAVA_DB_DIGEST }}
 
     #  - name: Install Trivy
     #    id: install-trivy
