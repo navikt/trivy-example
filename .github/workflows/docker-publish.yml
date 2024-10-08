@@ -57,7 +57,7 @@ jobs:
         run: |
           TRIVY_JAVA_DB_DIGEST=$(oras manifest fetch europe-north1-docker.pkg.dev/nais-io/remote-ghcr/aquasecurity/trivy-java-db:1 | jq -r '.layers[0].digest')
           echo "Trivy java db digest: $TRIVY_JAVA_DB_DIGEST"
-          echo "TRIVY_JAVA_DB_DIGEST=$TRIVY_JAVA_DB_DIGEST" >> $GITHUB_ENV
+          echo "TRIVY_JAVA_DB_DIGEST=$TRIVY_JAVA_DB_DIGEST" >> $GITHUB_OUTPUT
 
       - uses: actions/cache@v4
         id: cache-trivy-java-db
