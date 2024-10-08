@@ -65,16 +65,16 @@ jobs:
           path: .trivy
           key: trivy-db-${{ steps.fetch-trivy-java-db-digest.outputs.TRIVY_JAVA_DB_DIGEST }}
 
-      - name: Install Trivy
-        id: install-trivy
-        if: github.event_name != 'pull_request'
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.56.1 
+    #  - name: Install Trivy
+    #    id: install-trivy
+    #    if: github.event_name != 'pull_request'
+    #    run: |
+    #      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.56.1
 
-      - name: Download Trivy Java DB
-        if: github.event_name != 'pull_request' && steps.cache-trivy-java-db.outputs.cache-hit != 'true'
-        run: |
-          trivy image --cache-dir .trivy --java-db-repository "ghcr.io/aquasecurity/trivy-java-db:1","public.ecr.aws/aquasecurity/trivy-java-db" --download-java-db-only
+    #  - name: Download Trivy Java DB
+    #    if: github.event_name != 'pull_request' && steps.cache-trivy-java-db.outputs.cache-hit != 'true'
+    #    run: |
+    #      trivy image --cache-dir .trivy --java-db-repository "ghcr.io/aquasecurity/trivy-java-db:1","public.ecr.aws/aquasecurity/trivy-java-db" --download-java-db-only
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -123,11 +123,25 @@ jobs:
           echo "IMAGE=${{ fromJSON(steps.meta.outputs.json).tags[0] }}" >> $GITHUB_OUTPUT
           echo "DIGEST=${{ steps.build_push.outputs.digest }}" >> $GITHUB_OUTPUT
 
-      - name: Create SBOM with Trivy
-        if: github.event_name != 'pull_request'
-        run: |
-          trivy image --cache-dir .trivy --skip-db-update --offline-scan --format cyclonedx  ${{ steps.set-outputs.outputs.image }} --output sbom.json
-          cat sbom.json
+
+      - name: 'Generate SBOM'
+        if: inputs.sbom == 'auto-generate-for-me-please.json'
+        uses: 'aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8' # ratchet:aquasecurity/trivy-action@0.25.0
+        with:
+          scan-type: 'image'
+          format: 'cyclonedx'
+          output: 'auto-generate-for-me-please.json'
+          image-ref: "${{ inputs.image_ref }}"
+          cache-dir: .trivy
+        env:
+          TRIVY_SKIP_DB_UPDATE: "true"
+          TRIVY_JAVA_DB_REPOSITORY: "europe-north1-docker.pkg.dev/nais-io/remote-ghcr/aquasecurity/trivy-java-db:1,ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-java-db"_
+
+#      - name: Create SBOM with Trivy
+#        if: github.event_name != 'pull_request'
+#        run: |
+#          trivy image --cache-dir .trivy --skip-db-update --offline-scan --format cyclonedx  ${{ steps.set-outputs.outputs.image }} --output sbom.json
+#          cat sbom.json
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
