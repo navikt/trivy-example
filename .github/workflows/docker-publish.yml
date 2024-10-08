@@ -63,7 +63,7 @@ jobs:
         id: cache-trivy-java-db
         with:
           path: .trivy
-          key: yolo-trivy-db-${{ steps.fetch-trivy-java-db-digest.outputs.TRIVY_JAVA_DB_DIGEST }}
+          key: trivy-db-${{ steps.fetch-trivy-java-db-digest.outputs.TRIVY_JAVA_DB_DIGEST }}
 
     #  - name: Install Trivy
     #    id: install-trivy
@@ -137,6 +137,9 @@ jobs:
           image-ref:  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build_push.outputs.digest }}
           #"${{ steps.set-outputs.outputs.image }}"
           cache-dir: ".trivy"
+
+      - name: Fix .trivy permissions
+        run: sudo chown -R $(stat . -c %u:%g) .trivy
 
 #      - name: Create SBOM with Trivy
 #        if: github.event_name != 'pull_request'
