@@ -55,8 +55,8 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.56.1 
-          trivy image --cache-dir .trivy --java-db-repository "europe-north1-docker.pkg.dev/nais-io/remote-ghcr/aquasecurity/trivy-java-db:1","ghcr.io/aquasecurity/trivy-java-db:1","public.ecr.aws/aquasecurity/trivy-java-db" --download-java-db-only
-          NEXT_UPDATE=$(cat .trivy/db/metadata.json | jq -r '.NextUpdate')
+          trivy image --cache-dir .trivy --java-db-repository "ghcr.io/aquasecurity/trivy-java-db:1","public.ecr.aws/aquasecurity/trivy-java-db" --download-java-db-only
+          NEXT_UPDATE=$(cat .trivy/java-db/metadata.json | jq -r '.NextUpdate')
           echo "$NEXT_UPDATE is the next update"
           echo "NEXT_UPDATE=$NEXT_UPDATE" >> $GITHUB_OUTPUT
 
