@@ -134,7 +134,8 @@ jobs:
           scan-type: 'image'
           format: 'cyclonedx'
           output: 'auto-generate-for-me-please.json'
-          image-ref: "${{ steps.set-outputs.outputs.image }}"
+          image-ref:  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build_push.outputs.digest }}
+          #"${{ steps.set-outputs.outputs.image }}"
           cache-dir: ".trivy"
 
 #      - name: Create SBOM with Trivy
