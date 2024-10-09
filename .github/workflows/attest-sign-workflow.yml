@@ -1,0 +1,85 @@
+name: Example workflow for attest-sign
+
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE: ttl.sh/attest-sign
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Initialize Telemetry
+        id: telemetry_init
+        shell: bash
+        run: |
+          echo "TELEMETRY_LATEST_COMMIT=$(git show --no-patch --format=%ct $GITHUB_SHA)" >> $GITHUB_OUTPUT
+          echo "TELEMETRY_PIPELINE_START=$(date +'%s')" >> $GITHUB_OUTPUT
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Build JAR
+        run: ./gradlew build -x test
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: 2
+
+      - uses: docker/build-push-action@v5
+        id: build_push
+        with:
+          context: test
+          # The tag indicates 2 min ttl
+          tags: ${{ steps.meta.outputs.tags }}
+          push: true
+
+
+      - name: Telemetry record attestation start time
+        id: telemetry_attest
+        shell: bash
+        run: |
+          echo "TELEMETRY_ATTEST_START=$(date +'%s')" >> $GITHUB_OUTPUT
+
+      - name: Generate SBOM, attest and sign image
+        id: attest-sign
+        uses: nais/attest-sign@main
+        with:
+          image_ref: ${{ env.IMAGE }}@${{ steps.build_push.outputs.digest }}
+
+      - name: Telemetry record end time
+        id: telemetry_end
+        shell: bash
+        run: |
+          echo "TELEMETRY_PIPELINE_END=$(date +'%s')" >> $GITHUB_OUTPUT
+
+      - name: Set outputs
+        shell: bash
+        id: set-outputs
+        run: |
+          echo "NEW_VERSION=${{ steps.meta.outputs.version }}" >> $GITHUB_OUTPUT
+          echo "IMAGE=${{ fromJSON(steps.meta.outputs.json).tags[0] }}" >> $GITHUB_OUTPUT
+          echo "DIGEST=${{ steps.build_push.outputs.digest }}" >> $GITHUB_OUTPUT
+          echo "SALSA=${{ steps.attest-sign.outputs.sbom }}" >> $GITHUB_OUTPUT
+          echo "TELEMETRY=latest_commit=${{ steps.telemetry_init.outputs.TELEMETRY_LATEST_COMMIT }},pipeline_start=${{ steps.telemetry_init.outputs.TELEMETRY_PIPELINE_START }},build_start=${{ steps.telemetry_build.outputs.TELEMETRY_BUILD_START }},attest_start=${{ steps.telemetry_attest.outputs.TELEMETRY_ATTEST_START }},pipeline_end=${{ steps.telemetry_end.outputs.TELEMETRY_PIPELINE_END }}" >> $GITHUB_OUTPUT
