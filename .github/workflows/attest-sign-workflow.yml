@@ -50,6 +50,7 @@ jobs:
       - uses: docker/build-push-action@v5
         id: build_push
         with:
+          context: .
           # The tag indicates 2 min ttl
           tags: ${{ steps.meta.outputs.tags }}
           push: true
