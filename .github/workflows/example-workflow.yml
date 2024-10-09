@@ -27,7 +27,6 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           java-version: 21
-          cache: 'gradle'
           distribution: temurin
 
       - name: Build JAR
